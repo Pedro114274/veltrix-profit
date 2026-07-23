@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getDollarExchangeRate } from "../services/exchangeRate";
 
 type Resultado = {
   custoTotal: number;
@@ -9,6 +10,20 @@ type Resultado = {
   status: string;
 };
 
+function formatarDataCotacao(data: string) {
+  const partes = data.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/
+  );
+
+  if (!partes) {
+    return data;
+  }
+
+  const [, ano, mes, dia, hora, minuto] = partes;
+
+  return `${dia}/${mes}/${ano} às ${hora}:${minuto}`;
+}
+
 function Calculator() {
   const [produto, setProduto] = useState("");
   const [frete, setFrete] = useState("");
@@ -17,6 +32,36 @@ function Calculator() {
   const [taxaPlataforma, setTaxaPlataforma] = useState("0");
   const [taxaPagamento, setTaxaPagamento] = useState("0");
   const [resultado, setResultado] = useState<Resultado | null>(null);
+
+  const [carregandoCotacao, setCarregandoCotacao] = useState(false);
+  const [erroCotacao, setErroCotacao] = useState("");
+  const [cotacaoAtualizadaEm, setCotacaoAtualizadaEm] = useState("");
+
+  const atualizarCotacao = useCallback(async () => {
+    try {
+      setCarregandoCotacao(true);
+      setErroCotacao("");
+
+      const exchangeRate = await getDollarExchangeRate();
+
+      setCotacao(exchangeRate.value.toFixed(2));
+      setCotacaoAtualizadaEm(
+        formatarDataCotacao(exchangeRate.updatedAt)
+      );
+    } catch (error) {
+      console.error(error);
+
+      setErroCotacao(
+        "Não foi possível atualizar a cotação. Preencha o valor manualmente."
+      );
+    } finally {
+      setCarregandoCotacao(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void atualizarCotacao();
+  }, [atualizarCotacao]);
 
   function calcularLucro() {
     const custoProduto = Number(produto);
@@ -28,6 +73,8 @@ function Calculator() {
     const taxasTotais = plataforma + pagamento;
 
     if (
+      produto.trim() === "" ||
+      frete.trim() === "" ||
       custoProduto < 0 ||
       custoFrete < 0 ||
       valorCotacao <= 0 ||
@@ -40,20 +87,37 @@ function Calculator() {
       return;
     }
 
-    const percentualTotal = (margemDesejada + taxasTotais) / 100;
+    const percentualTotal =
+      (margemDesejada + taxasTotais) / 100;
 
     if (percentualTotal >= 1) {
-      alert("A soma da margem e das taxas precisa ser menor que 100%.");
+      alert(
+        "A soma da margem e das taxas precisa ser menor que 100%."
+      );
       return;
     }
 
-    const custoTotal = (custoProduto + custoFrete) * valorCotacao;
-    const precoVenda = custoTotal / (1 - percentualTotal);
-    const valorTaxas = precoVenda * (taxasTotais / 100);
-    const lucroLiquido = precoVenda - custoTotal - valorTaxas;
-    const roi = custoTotal > 0 ? (lucroLiquido / custoTotal) * 100 : 0;
+    const custoTotal =
+      (custoProduto + custoFrete) * valorCotacao;
+
+    const precoVenda =
+      custoTotal / (1 - percentualTotal);
+
+    const valorTaxas =
+      precoVenda * (taxasTotais / 100);
+
+    const lucroLiquido =
+      precoVenda - custoTotal - valorTaxas;
+
+    const roi =
+      custoTotal > 0
+        ? (lucroLiquido / custoTotal) * 100
+        : 0;
+
     const margemReal =
-      precoVenda > 0 ? (lucroLiquido / precoVenda) * 100 : 0;
+      precoVenda > 0
+        ? (lucroLiquido / precoVenda) * 100
+        : 0;
 
     let status = "Não recomendado";
 
@@ -78,52 +142,98 @@ function Calculator() {
   return (
     <section className="calculator-card">
       <div className="calculator-heading">
-        <span className="eyebrow">VELTRIX TECHNOLOGIES</span>
+        <span className="eyebrow">
+          VELTRIX TECHNOLOGIES
+        </span>
+
         <h1>Veltrix Profit Calculator</h1>
+
         <p>Precifique seus produtos com inteligência.</p>
       </div>
 
       <div className="form-grid">
         <div className="field">
           <label htmlFor="produto">Produto (USD)</label>
+
           <input
             id="produto"
             type="number"
             min="0"
             step="0.01"
             value={produto}
-            onChange={(event) => setProduto(event.target.value)}
+            onChange={(event) =>
+              setProduto(event.target.value)
+            }
             placeholder="0.00"
           />
         </div>
 
         <div className="field">
           <label htmlFor="frete">Frete (USD)</label>
+
           <input
             id="frete"
             type="number"
             min="0"
             step="0.01"
             value={frete}
-            onChange={(event) => setFrete(event.target.value)}
+            onChange={(event) =>
+              setFrete(event.target.value)
+            }
             placeholder="0.00"
           />
         </div>
 
         <div className="field">
           <label htmlFor="cotacao">Cotação (R$)</label>
+
           <input
             id="cotacao"
             type="number"
             min="0.01"
             step="0.01"
             value={cotacao}
-            onChange={(event) => setCotacao(event.target.value)}
+            onChange={(event) =>
+              setCotacao(event.target.value)
+            }
           />
+
+          <button
+            className="exchange-rate-button"
+            type="button"
+            onClick={() => void atualizarCotacao()}
+            disabled={carregandoCotacao}
+          >
+            {carregandoCotacao
+              ? "Atualizando..."
+              : "↻ Atualizar cotação"}
+          </button>
+
+          <div
+            className="exchange-rate-message"
+            aria-live="polite"
+          >
+            {!carregandoCotacao &&
+              cotacaoAtualizadaEm &&
+              !erroCotacao && (
+                <small>
+                  Atualizada em: {cotacaoAtualizadaEm}
+                </small>
+              )}
+
+            {erroCotacao && (
+              <small className="exchange-rate-error">
+                {erroCotacao}
+              </small>
+            )}
+          </div>
         </div>
 
         <div className="field">
-          <label htmlFor="margem">Margem desejada (%)</label>
+          <label htmlFor="margem">
+            Margem desejada (%)
+          </label>
+
           <input
             id="margem"
             type="number"
@@ -131,36 +241,52 @@ function Calculator() {
             max="99.99"
             step="0.01"
             value={margem}
-            onChange={(event) => setMargem(event.target.value)}
+            onChange={(event) =>
+              setMargem(event.target.value)
+            }
           />
         </div>
 
         <div className="field">
-          <label htmlFor="taxa-plataforma">Taxa da plataforma (%)</label>
+          <label htmlFor="taxa-plataforma">
+            Taxa da plataforma (%)
+          </label>
+
           <input
             id="taxa-plataforma"
             type="number"
             min="0"
             step="0.01"
             value={taxaPlataforma}
-            onChange={(event) => setTaxaPlataforma(event.target.value)}
+            onChange={(event) =>
+              setTaxaPlataforma(event.target.value)
+            }
           />
         </div>
 
         <div className="field">
-          <label htmlFor="taxa-pagamento">Taxa de pagamento (%)</label>
+          <label htmlFor="taxa-pagamento">
+            Taxa de pagamento (%)
+          </label>
+
           <input
             id="taxa-pagamento"
             type="number"
             min="0"
             step="0.01"
             value={taxaPagamento}
-            onChange={(event) => setTaxaPagamento(event.target.value)}
+            onChange={(event) =>
+              setTaxaPagamento(event.target.value)
+            }
           />
         </div>
       </div>
 
-      <button type="button" onClick={calcularLucro}>
+      <button
+        className="calculate-button"
+        type="button"
+        onClick={calcularLucro}
+      >
         Calcular lucro
       </button>
 
@@ -168,17 +294,23 @@ function Calculator() {
         <div className="results">
           <div>
             <span>Custo total</span>
-            <strong>R$ {resultado.custoTotal.toFixed(2)}</strong>
+            <strong>
+              R$ {resultado.custoTotal.toFixed(2)}
+            </strong>
           </div>
 
           <div>
             <span>Preço sugerido</span>
-            <strong>R$ {resultado.precoVenda.toFixed(2)}</strong>
+            <strong>
+              R$ {resultado.precoVenda.toFixed(2)}
+            </strong>
           </div>
 
           <div>
             <span>Lucro líquido</span>
-            <strong>R$ {resultado.lucroLiquido.toFixed(2)}</strong>
+            <strong>
+              R$ {resultado.lucroLiquido.toFixed(2)}
+            </strong>
           </div>
 
           <div>
@@ -188,7 +320,9 @@ function Calculator() {
 
           <div>
             <span>Margem real</span>
-            <strong>{resultado.margemReal.toFixed(1)}%</strong>
+            <strong>
+              {resultado.margemReal.toFixed(1)}%
+            </strong>
           </div>
 
           <div>
