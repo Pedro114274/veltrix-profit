@@ -1,0 +1,160 @@
+#root {
+  min-height: 100vh;
+}
+
+.app {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.brand {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  letter-spacing: -0.05em;
+  color: #ffffff;
+}
+
+.product-name {
+  margin: 10px 0 0;
+  font-size: clamp(1.3rem, 2.5vw, 2rem);
+  color: #d7d9df;
+}
+
+.tagline {
+  margin: 10px 0 0;
+  color: #9ca3af;
+  font-size: 1.05rem;
+}
+
+.calculator-card {
+  max-width: 850px;
+  margin: 0 auto;
+  background: #1b1d22;
+  padding: 35px;
+  border-radius: 18px;
+  border: 1px solid #2f3238;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.calculator-card h3 {
+  margin: 0 0 30px;
+  text-align: center;
+  font-size: 1.7rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  margin-bottom: 8px;
+  color: #b6bcc8;
+}
+
+.field input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #343842;
+  background: #111317;
+  color: #ffffff;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #6b7280;
+}
+
+button {
+  width: 100%;
+  margin-top: 30px;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #3d4552;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #4c5563;
+  transform: translateY(-1px);
+}
+
+.results {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.results div {
+  padding: 18px;
+  border-radius: 12px;
+  background: #111317;
+  border: 1px solid #2f3238;
+}
+
+.results span {
+  display: block;
+  margin-bottom: 8px;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.results strong {
+  font-size: 1.35rem;
+  color: #ffffff;
+}
+
+@media (max-width: 700px) {
+  .form-grid,
+  .results {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-card {
+    padding: 24px;
+  }
+}
+.calculator-heading {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.calculator-heading .eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: #8f96a3;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.calculator-heading h3 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  color: #ffffff;
+}
+
+.calculator-heading p {
+  margin: 10px 0 0;
+  color: #9ca3af;
+  font-size: 1rem;
+}
